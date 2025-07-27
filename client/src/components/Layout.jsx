@@ -21,7 +21,13 @@ export default function Layout({ children }) {
       <header className="sticky top-0 z-50 bg-slate-900/50 backdrop-blur-lg border-b border-slate-800">
         <nav className="container mx-auto px-6 py-4 flex justify-between items-center">
           <Link to="/" className="flex items-center space-x-2">
-            <span className="text-2xl font-bold tracking-tighter bg-gradient-to-r from-amber-400 to-red-500 bg-clip-text text-transparent">
+            <span className="text-2xl font-bold tracking-tighter" style={{
+              background: 'linear-gradient(to right, #fbbf24, #ef4444)',
+              WebkitBackgroundClip: 'text',
+              backgroundClip: 'text',
+              color: 'transparent',
+              WebkitTextFillColor: 'transparent'
+            }}>
               CallitDNS
             </span>
           </Link>

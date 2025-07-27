@@ -8,7 +8,13 @@ export default function Home() {
     <Layout>
       <section className="text-center py-20 md:py-32">
         <h1 className="text-5xl md:text-7xl font-extrabold tracking-tighter mb-4 text-white">
-          Stop Configuring. <span className="bg-gradient-to-r from-amber-400 to-red-500 bg-clip-text text-transparent">Start Calling.</span>
+          Stop Configuring. <span style={{
+            background: 'linear-gradient(to right, #fbbf24, #ef4444)',
+            WebkitBackgroundClip: 'text',
+            backgroundClip: 'text',
+            color: 'transparent',
+            WebkitTextFillColor: 'transparent'
+          }}>Start Calling.</span>
         </h1>
         <p className="max-w-3xl mx-auto text-lg md:text-xl text-slate-300 mb-8">
           CallitDNS is the first AI-native DNS provider that predicts threats, prevents downtime, 
@@ -25,7 +31,13 @@ export default function Home() {
       <section className="py-20">
         <div className="text-center max-w-3xl mx-auto mb-16">
           <h2 className="text-4xl md:text-5xl font-bold tracking-tighter text-white">This isn't just DNS.</h2>
-          <h3 className="text-4xl md:text-5xl font-bold tracking-tighter bg-gradient-to-r from-amber-400 to-red-500 bg-clip-text text-transparent">
+          <h3 className="text-4xl md:text-5xl font-bold tracking-tighter" style={{
+            background: 'linear-gradient(to right, #fbbf24, #ef4444)',
+            WebkitBackgroundClip: 'text',
+            backgroundClip: 'text',
+            color: 'transparent',
+            WebkitTextFillColor: 'transparent'
+          }}>
             It's intelligent infrastructure.
           </h3>
         </div>
