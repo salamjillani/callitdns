@@ -8,12 +8,15 @@ admin.initializeApp();
 exports.runHealthScan = functions.https.onCall(async (data, context) => {
   // Verify user is authenticated
   if (!context.auth) {
+    console.error('No auth context found');
     throw new functions.https.HttpsError(
       'unauthenticated',
       'User must be authenticated to run a scan.'
     );
   }
 
+  console.log('User authenticated with UID:', context.auth.uid);
+  
   const { domain } = data;
 
   if (!domain) {

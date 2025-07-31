@@ -1,5 +1,5 @@
 {
   "projects": {
-    "default": "callitdns"
+    "default": "callitdns-prod"
   }
 }

@@ -8,7 +8,7 @@ async function analyzeWithGemini(dnsRecords, domain) {
   }
 
   const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+  const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' }); 
 
   const prompt = `
     Analyze these DNS records for the domain "${domain}" and identify common errors or security vulnerabilities.
@@ -69,7 +69,23 @@ async function analyzeWithGemini(dnsRecords, domain) {
 
   } catch (error) {
     console.error('Gemini API error:', error);
-    throw new Error('Failed to analyze DNS records with AI');
+    
+    // Provide more specific error messages
+    if (error.status === 403) {
+      if (error.message.includes('SERVICE_DISABLED')) {
+        throw new Error('Generative Language API is not enabled. Please enable it in Google Cloud Console.');
+      } else if (error.message.includes('API_KEY_INVALID')) {
+        throw new Error('Invalid Gemini API key. Please check your configuration.');
+      } else {
+        throw new Error('Access denied to Gemini API. Please check your API key permissions.');
+      }
+    } else if (error.status === 429) {
+      throw new Error('Gemini API rate limit exceeded. Please try again later.');
+    } else if (error.status >= 500) {
+      throw new Error('Gemini API server error. Please try again later.');
+    } else {
+      throw new Error(`Gemini API error: ${error.message}`);
+    }
   }
 }
 
