@@ -1,12 +1,15 @@
+// Update client/src/components/DomainCard.jsx
 import React, { useState } from 'react';
-import { Shield, AlertTriangle, CheckCircle, Loader } from 'lucide-react';
+import { Shield, AlertTriangle, CheckCircle, Loader, Sparkles } from 'lucide-react';
 import { runHealthScan } from '../services/scans';
 import ScanResults from './ScanResults';
+import DottyCommand from './DottyCommand';
 
 export default function DomainCard({ domain, onDelete }) {
   const [scanning, setScanning] = useState(false);
   const [scanResults, setScanResults] = useState(null);
   const [error, setError] = useState('');
+  const [showDotty, setShowDotty] = useState(false);
 
   const handleScan = async () => {
     setScanning(true);
@@ -59,7 +62,21 @@ export default function DomainCard({ domain, onDelete }) {
             </>
           )}
         </button>
+        
+        <button
+          onClick={() => setShowDotty(!showDotty)}
+          className="flex items-center space-x-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-black font-semibold px-4 py-2 rounded-lg transition"
+        >
+          <Sparkles className="w-4 h-4" />
+          <span>Dotty AI</span>
+        </button>
       </div>
+
+      {showDotty && (
+        <div className="mt-6">
+          <DottyCommand domain={domain} />
+        </div>
+      )}
 
       {error && (
         <div className="mt-4 p-4 bg-red-500/10 border border-red-500/20 rounded-lg">

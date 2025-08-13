@@ -2,44 +2,40 @@ const axios = require('axios');
 
 const CLOUDFLARE_API_URL = 'https://api.cloudflare.com/client/v4';
 
+async function getZoneId(domain) {
+  const apiKey = process.env.CLOUDFLARE_API_KEY;
+  const email = process.env.CLOUDFLARE_EMAIL;
+
+  try {
+    const response = await axios.get(
+      `${CLOUDFLARE_API_URL}/zones?name=${domain}`,
+      {
+        headers: {
+          'X-Auth-Email': email,
+          'X-Auth-Key': apiKey,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+    
+    if (response.data.result.length > 0) {
+      return response.data.result[0].id;
+    }
+    
+    throw new Error(`Zone not found for domain: ${domain}`);
+  } catch (error) {
+    console.error('Error getting zone ID:', error);
+    throw error;
+  }
+}
+
 async function getDNSRecords(domain) {
   const apiKey = process.env.CLOUDFLARE_API_KEY;
   const email = process.env.CLOUDFLARE_EMAIL;
-  const zoneId = process.env.CLOUDFLARE_ZONE_ID;
-
-  if (!apiKey || !email || !zoneId) {
-    throw new Error('Cloudflare API credentials not configured');
-  }
-
+  
   try {
-    // For MVP, we'll simulate DNS records since actual zone ID would be domain-specific
-    // In production, you'd first get the zone ID for the domain, then fetch records
+    const zoneId = await getZoneId(domain);
     
-    // Simulated response for demonstration
-    const simulatedRecords = [
-      {
-        type: 'A',
-        name: domain,
-        content: '192.168.1.1',
-        ttl: 300
-      },
-      {
-        type: 'CNAME',
-        name: `www.${domain}`,
-        content: domain,
-        ttl: 300
-      },
-      {
-        type: 'MX',
-        name: domain,
-        content: 'mail.example.com',
-        priority: 10,
-        ttl: 300
-      }
-    ];
-
-    // In production, use this:
-    /*
     const response = await axios.get(
       `${CLOUDFLARE_API_URL}/zones/${zoneId}/dns_records`,
       {
@@ -52,13 +48,72 @@ async function getDNSRecords(domain) {
     );
     
     return response.data.result;
-    */
-
-    return simulatedRecords;
   } catch (error) {
     console.error('Cloudflare API error:', error);
     throw new Error('Failed to fetch DNS records from Cloudflare');
   }
 }
 
-module.exports = { getDNSRecords };
+async function createDNSRecord(zoneId, record) {
+  const apiKey = process.env.CLOUDFLARE_API_KEY;
+  const email = process.env.CLOUDFLARE_EMAIL;
+
+  const response = await axios.post(
+    `${CLOUDFLARE_API_URL}/zones/${zoneId}/dns_records`,
+    record,
+    {
+      headers: {
+        'X-Auth-Email': email,
+        'X-Auth-Key': apiKey,
+        'Content-Type': 'application/json'
+      }
+    }
+  );
+  
+  return response.data.result;
+}
+
+async function updateDNSRecord(zoneId, recordId, record) {
+  const apiKey = process.env.CLOUDFLARE_API_KEY;
+  const email = process.env.CLOUDFLARE_EMAIL;
+
+  const response = await axios.put(
+    `${CLOUDFLARE_API_URL}/zones/${zoneId}/dns_records/${recordId}`,
+    record,
+    {
+      headers: {
+        'X-Auth-Email': email,
+        'X-Auth-Key': apiKey,
+        'Content-Type': 'application/json'
+      }
+    }
+  );
+  
+  return response.data.result;
+}
+
+async function deleteDNSRecord(zoneId, recordId) {
+  const apiKey = process.env.CLOUDFLARE_API_KEY;
+  const email = process.env.CLOUDFLARE_EMAIL;
+
+  const response = await axios.delete(
+    `${CLOUDFLARE_API_URL}/zones/${zoneId}/dns_records/${recordId}`,
+    {
+      headers: {
+        'X-Auth-Email': email,
+        'X-Auth-Key': apiKey,
+        'Content-Type': 'application/json'
+      }
+    }
+  );
+  
+  return response.data.result;
+}
+
+module.exports = { 
+  getDNSRecords, 
+  getZoneId, 
+  createDNSRecord, 
+  updateDNSRecord, 
+  deleteDNSRecord 
+};
