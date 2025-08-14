@@ -1,11 +1,11 @@
-const functions = require('firebase-functions');
+// server/functions/src/gemini.js
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 
 async function analyzeWithGemini(dnsRecords, domain) {
-  const apiKey = functions.config().gemini?.api_key || process.env.GEMINI_API_KEY;
+  const apiKey = process.env.GEMINI_API_KEY;
   
   if (!apiKey) {
-    throw new Error('Gemini API key not configured');
+    throw new Error('Gemini API key not configured. Please set GEMINI_API_KEY in environment variables.');
   }
 
   const genAI = new GoogleGenerativeAI(apiKey);

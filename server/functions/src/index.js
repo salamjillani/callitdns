@@ -1,7 +1,14 @@
 // server/functions/src/index.js
-const functions = require('firebase-functions');
+const {onCall, onRequest, HttpsError} = require('firebase-functions/v2/https');
+const {setGlobalOptions} = require('firebase-functions/v2/options');
 const admin = require('firebase-admin');
 const cors = require('cors')({ origin: true });
+
+// Set global options
+setGlobalOptions({
+  region: 'us-central1',
+  maxInstances: 10,
+});
 
 // Initialize Firebase Admin
 admin.initializeApp();
@@ -10,42 +17,81 @@ admin.initializeApp();
 const { getDNSRecords, getZoneId } = require('./cloudflare');
 const { analyzeWithGemini } = require('./gemini');
 
-// Enhanced auth verification function
-const verifyAuth = (context) => {
-  console.log('Verifying auth context:', {
-    hasAuth: !!context.auth,
-    hasUid: !!(context.auth && context.auth.uid),
-    uid: context.auth?.uid,
-    token: context.auth?.token ? 'present' : 'missing'
+// Enhanced auth verification function with better debugging
+const verifyAuth = (request) => {
+  console.log('=== AUTH VERIFICATION DEBUG ===');
+  console.log('Full request received:', {
+    hasAuth: !!(request && request.auth),
+    hasUid: !!(request && request.auth && request.auth.uid),
+    hasToken: !!(request && request.auth && request.auth.token),
+    uid: request && request.auth ? request.auth.uid : 'missing',
+    tokenPresent: request && request.auth && request.auth.token ? 'yes' : 'no'
   });
-
-  if (!context.auth || !context.auth.uid) {
-    console.error('Authentication failed:', {
-      auth: context.auth,
-      uid: context.auth?.uid
+  
+  // More detailed auth object inspection
+  if (request && request.auth) {
+    console.log('Auth object details:', {
+      uid: request.auth.uid,
+      email: request.auth.token ? request.auth.token.email : 'no email in token',
+      emailVerified: request.auth.token ? request.auth.token.email_verified : 'no token',
+      authTime: request.auth.token ? request.auth.token.auth_time : 'no token'
     });
-    throw new functions.https.HttpsError(
+  }
+  
+  console.log('=== END AUTH DEBUG ===');
+
+  if (!request) {
+    console.error('No request received');
+    throw new HttpsError(
       'unauthenticated',
-      'Authentication required. Please sign out and sign in again.'
+      'No authentication context received'
+    );
+  }
+
+  if (!request.auth) {
+    console.error('No auth in request');
+    throw new HttpsError(
+      'unauthenticated',
+      'No authentication data received. Please ensure you are signed in.'
+    );
+  }
+
+  if (!request.auth.uid) {
+    console.error('No UID in auth');
+    throw new HttpsError(
+      'unauthenticated',
+      'Invalid authentication token. Please sign out and sign in again.'
     );
   }
   
-  return context.auth.uid;
+  return request.auth.uid;
 };
 
-// Health Scan Function with enhanced auth handling
-exports.runHealthScan = functions.https.onCall(async (data, context) => {
-  console.log('Health scan request received');
-  console.log('Raw context:', JSON.stringify(context, null, 2));
+// Health Scan Function with v2 API - Added secrets parameter
+exports.runHealthScan = onCall({
+  timeoutSeconds: 300,
+  memory: '1GiB',
+  cors: true,
+  secrets: ['CLOUDFLARE_API_KEY', 'CLOUDFLARE_EMAIL', 'CLOUDFLARE_ZONE_ID', 'GEMINI_API_KEY']
+}, async (request) => {
+  console.log('=== HEALTH SCAN START ===');
+  console.log('Function triggered');
+  console.log('Request data:', request.data);
   
   // Verify authentication
-  const userId = verifyAuth(context);
-  console.log('Authenticated user ID:', userId);
+  let userId;
+  try {
+    userId = verifyAuth(request);
+    console.log('Authentication successful for user:', userId);
+  } catch (authError) {
+    console.error('Authentication failed:', authError.message);
+    throw authError;
+  }
   
-  const { domain } = data;
+  const { domain } = request.data;
 
   if (!domain) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       'invalid-argument',
       'Domain name is required.'
     );
@@ -75,6 +121,7 @@ exports.runHealthScan = functions.https.onCall(async (data, context) => {
       });
     }
 
+    console.log('Health scan completed successfully');
     return {
       success: true,
       domain,
@@ -86,7 +133,7 @@ exports.runHealthScan = functions.https.onCall(async (data, context) => {
 
   } catch (error) {
     console.error('Scan error:', error);
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       'internal',
       'Failed to complete DNS scan.',
       error.message
@@ -94,18 +141,23 @@ exports.runHealthScan = functions.https.onCall(async (data, context) => {
   }
 });
 
-// Dotty Command Function with enhanced auth handling
-exports.executeDottyCommand = functions.https.onCall(async (data, context) => {
-  console.log('Dotty command request received');
+// Dotty Command Function - Added secrets parameter
+exports.executeDottyCommand = onCall({
+  timeoutSeconds: 300,
+  memory: '1GiB',
+  cors: true,
+  secrets: ['CLOUDFLARE_API_KEY', 'CLOUDFLARE_EMAIL', 'CLOUDFLARE_ZONE_ID', 'GEMINI_API_KEY']
+}, async (request) => {
+  console.log('=== DOTTY COMMAND START ===');
   
   // Verify authentication
-  const userId = verifyAuth(context);
+  const userId = verifyAuth(request);
   console.log('Authenticated user ID:', userId);
 
-  const { command, domain } = data;
+  const { command, domain } = request.data;
 
   if (!command || !domain) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       'invalid-argument',
       'Command and domain are required.'
     );
@@ -163,7 +215,7 @@ exports.executeDottyCommand = functions.https.onCall(async (data, context) => {
     };
   } catch (error) {
     console.error('Dotty command error:', error);
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       'internal',
       'Failed to execute Dotty command.',
       error.message
@@ -171,17 +223,22 @@ exports.executeDottyCommand = functions.https.onCall(async (data, context) => {
   }
 });
 
-// Stripe Functions (enhanced auth handling)
-exports.createCheckoutSession = functions.https.onCall(async (data, context) => {
-  const userId = verifyAuth(context);
-  const { priceId, successUrl, cancelUrl } = data;
+// Stripe Functions - Added secrets parameter
+exports.createCheckoutSession = onCall({
+  timeoutSeconds: 60,
+  memory: '256MiB',
+  cors: true,
+  secrets: ['STRIPE_SECRET_KEY', 'STRIPE_PRO_PRICE_ID', 'STRIPE_ENTERPRISE_PRICE_ID']
+}, async (request) => {
+  const userId = verifyAuth(request);
+  const { priceId, successUrl, cancelUrl } = request.data;
   
   try {
     const { createCheckoutSession } = require('./stripe');
     
     const session = await createCheckoutSession(
       userId,
-      context.auth.token.email,
+      request.auth.token.email,
       priceId,
       successUrl,
       cancelUrl
@@ -193,7 +250,7 @@ exports.createCheckoutSession = functions.https.onCall(async (data, context) => 
     };
   } catch (error) {
     console.error('Checkout session error:', error);
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       'internal',
       'Failed to create checkout session.',
       error.message
@@ -201,9 +258,14 @@ exports.createCheckoutSession = functions.https.onCall(async (data, context) => 
   }
 });
 
-exports.createPortalSession = functions.https.onCall(async (data, context) => {
-  const userId = verifyAuth(context);
-  const { returnUrl } = data;
+exports.createPortalSession = onCall({
+  timeoutSeconds: 60,
+  memory: '256MiB',
+  cors: true,
+  secrets: ['STRIPE_SECRET_KEY']
+}, async (request) => {
+  const userId = verifyAuth(request);
+  const { returnUrl } = request.data;
   
   try {
     const { createPortalSession, getCustomerByUserId } = require('./stripe');
@@ -221,7 +283,7 @@ exports.createPortalSession = functions.https.onCall(async (data, context) => {
     };
   } catch (error) {
     console.error('Portal session error:', error);
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       'internal',
       'Failed to create portal session.',
       error.message
@@ -229,8 +291,13 @@ exports.createPortalSession = functions.https.onCall(async (data, context) => {
   }
 });
 
-exports.getUserSubscription = functions.https.onCall(async (data, context) => {
-  const userId = verifyAuth(context);
+exports.getUserSubscription = onCall({
+  timeoutSeconds: 60,
+  memory: '256MiB',
+  cors: true,
+  secrets: ['STRIPE_SECRET_KEY', 'STRIPE_PRO_PRICE_ID', 'STRIPE_ENTERPRISE_PRICE_ID']
+}, async (request) => {
+  const userId = verifyAuth(request);
 
   try {
     const { getCustomerByUserId, getSubscription, PLANS } = require('./stripe');
@@ -273,8 +340,13 @@ exports.getUserSubscription = functions.https.onCall(async (data, context) => {
   }
 });
 
-// Stripe Webhook (with CORS handling)
-exports.stripeWebhook = functions.https.onRequest(async (req, res) => {
+// Stripe Webhook (with CORS handling) - Added secrets parameter
+exports.stripeWebhook = onRequest({
+  timeoutSeconds: 60,
+  memory: '256MiB',
+  cors: true,
+  secrets: ['STRIPE_WEBHOOK_SECRET', 'STRIPE_SECRET_KEY']
+}, async (req, res) => {
   // Handle CORS
   return cors(req, res, async () => {
     if (req.method === 'OPTIONS') {
@@ -286,7 +358,8 @@ exports.stripeWebhook = functions.https.onRequest(async (req, res) => {
     const stripe = getStripeForWebhook();
     
     const sig = req.headers['stripe-signature'];
-    const endpointSecret = functions.config().stripe?.webhook_secret || process.env.STRIPE_WEBHOOK_SECRET;
+    // Now using process.env which will be populated from secrets
+    const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
     
     if (!endpointSecret) {
       console.error('Webhook secret not configured');

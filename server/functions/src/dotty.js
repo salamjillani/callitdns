@@ -1,13 +1,14 @@
+// server/functions/src/dotty.js
 const { GoogleGenerativeAI } = require('@google/generative-ai');
-const functions = require('firebase-functions');
 const { createDNSRecord, updateDNSRecord, deleteDNSRecord } = require('./cloudflare');
 
 async function processDottyCommand(command, domain, existingRecords) {
-  const apiKey = functions.config().gemini?.api_key || process.env.GEMINI_API_KEY;
+  const apiKey = process.env.GEMINI_API_KEY;
   
   if (!apiKey) {
-    throw new Error('Gemini API key not configured');
+    throw new Error('Gemini API key not configured. Please set GEMINI_API_KEY in environment variables.');
   }
+  
   const genAI = new GoogleGenerativeAI(apiKey);
   const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 

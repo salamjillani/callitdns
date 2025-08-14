@@ -1,4 +1,3 @@
-// client/src/context/AuthContext.jsx
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { auth } from '../firebase';
 import {
@@ -37,65 +36,83 @@ export function AuthProvider({ children }) {
   }
 
   useEffect(() => {
+    console.log('Setting up auth state listener...');
+    
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      console.log('Auth state changed:', user ? 'User logged in' : 'User logged out');
-      console.log('User UID:', user?.uid);
-      console.log('User email:', user?.email);
+      console.log('=== AUTH STATE CHANGE ===');
+      console.log('User status:', user ? 'logged in' : 'logged out');
       
       if (user) {
+        console.log('User details:', {
+          uid: user.uid,
+          email: user.email,
+          emailVerified: user.emailVerified,
+          providerData: user.providerData?.length || 0
+        });
+        
         try {
-          // Force token refresh to ensure we have a valid token
+          // Always get a fresh token when auth state changes
+          console.log('Getting fresh token after auth change...');
           const token = await user.getIdToken(true);
-          console.log('Token refreshed successfully, token length:', token?.length);
           
-          // Validate token by checking its structure
-          if (token && token.length > 100) {
-            console.log('Token appears valid');
+          console.log('Token obtained:', {
+            length: token?.length,
+            valid: token && token.length > 500
+          });
+          
+          // Validate token structure
+          if (token && token.length > 500) {
+            console.log('Token appears valid, checking claims...');
             
-            // Wait longer to ensure Firebase Functions can process the token
-            await new Promise(resolve => setTimeout(resolve, 2000));
-            
-            // Test the token by making a simple call
             try {
-              const testTokenResult = await user.getIdTokenResult();
+              const tokenResult = await user.getIdTokenResult();
               console.log('Token validation successful:', {
-                expirationTime: testTokenResult.expirationTime,
-                authTime: testTokenResult.authTime,
-                issuedAtTime: testTokenResult.issuedAtTime
+                expirationTime: new Date(tokenResult.expirationTime).toISOString(),
+                authTime: new Date(tokenResult.authTime).toISOString(),
+                issuedAtTime: new Date(tokenResult.issuedAtTime).toISOString(),
+                claims: Object.keys(tokenResult.claims || {})
               });
+              
+              // Set user only after successful token validation
+              setCurrentUser(user);
+              
             } catch (tokenTestError) {
-              console.warn('Token validation failed:', tokenTestError);
+              console.error('Token validation failed:', tokenTestError);
+              // Still set the user, but log the issue
+              setCurrentUser(user);
             }
+            
           } else {
             console.warn('Token appears invalid or too short');
+            setCurrentUser(user); // Still set user, but there might be issues
           }
           
         } catch (error) {
-          console.error('Error refreshing token:', error);
+          console.error('Error getting token on auth change:', error);
           
-          // If token refresh fails, try to sign the user out and back in
-          if (error.code === 'auth/network-request-failed' || 
-              error.code === 'auth/internal-error') {
-            console.log('Network error, will retry token refresh...');
-            
-            // Try one more time
-            setTimeout(async () => {
+          // Set user anyway, but log the error
+          setCurrentUser(user);
+          
+          // Try to recover
+          setTimeout(async () => {
+            if (auth.currentUser) {
               try {
-                if (auth.currentUser) {
-                  await auth.currentUser.getIdToken(true);
-                  console.log('Token refresh retry successful');
-                }
-              } catch (retryError) {
-                console.error('Token refresh retry failed:', retryError);
+                await auth.currentUser.getIdToken(true);
+                console.log('Token recovery successful');
+              } catch (recoveryError) {
+                console.error('Token recovery failed:', recoveryError);
               }
-            }, 3000);
-          }
+            }
+          }, 5000);
         }
+      } else {
+        console.log('No user, clearing state');
+        setCurrentUser(null);
       }
       
-      setCurrentUser(user);
       setLoading(false);
       setAuthChecked(true);
+      console.log('=== AUTH STATE CHANGE COMPLETE ===');
     });
 
     return unsubscribe;
@@ -109,7 +126,7 @@ export function AuthProvider({ children }) {
 
     try {
       const token = await currentUser.getIdToken(true);
-      if (!token || token.length < 100) {
+      if (!token || token.length < 500) {
         throw new Error('Invalid token received');
       }
       return token;

@@ -1,4 +1,3 @@
-// client/src/services/stripe.js
 import { functions, auth } from '../firebase';
 import { httpsCallable } from 'firebase/functions';
 
@@ -11,11 +10,23 @@ const ensureAuthenticated = async () => {
 
   try {
     console.log('Getting fresh token for Stripe operation...');
-    const token = await currentUser.getIdToken(true);
-    console.log('Fresh token obtained for Stripe, length:', token?.length);
     
-    // Wait longer to ensure token propagation
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    // Reload user to ensure fresh auth state
+    await currentUser.reload();
+    
+    const token = await currentUser.getIdToken(true);
+    console.log('Fresh token obtained for Stripe:', {
+      length: token?.length,
+      uid: currentUser.uid
+    });
+    
+    // Validate token
+    if (!token || token.length < 500) {
+      throw new Error('Invalid token received');
+    }
+    
+    // Wait for token propagation
+    await new Promise(resolve => setTimeout(resolve, 3000));
     
     return currentUser;
   } catch (error) {
@@ -37,16 +48,19 @@ const callFunctionWithRetry = async (functionName, data = {}) => {
     
     if (error.code === 'functions/unauthenticated' || 
         error.message?.includes('unauthenticated')) {
-      console.log(`Auth error for ${functionName}, trying retry...`);
+      console.log(`Auth error for ${functionName}, trying complete refresh...`);
       
       try {
-        // Retry with fresh authentication
-        await ensureAuthenticated();
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        const retryCallable = httpsCallable(functions, functionName);
-        const retryResult = await retryCallable(data);
-        return retryResult.data;
+        // Complete user refresh
+        const user = auth.currentUser;
+        if (user) {
+          await user.reload();
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          
+          const retryCallable = httpsCallable(functions, functionName);
+          const retryResult = await retryCallable(data);
+          return retryResult.data;
+        }
         
       } catch (retryError) {
         console.error(`${functionName} retry failed:`, retryError);

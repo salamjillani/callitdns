@@ -1,13 +1,13 @@
-const functions = require('firebase-functions');
+// server/functions/src/cloudflare.js
 const axios = require('axios');
 
 const CLOUDFLARE_API_URL = 'https://api.cloudflare.com/client/v4';
 
 function getCloudflareConfig() {
   return {
-    apiKey: functions.config().cloudflare?.api_key || process.env.CLOUDFLARE_API_KEY,
-    email: functions.config().cloudflare?.email || process.env.CLOUDFLARE_EMAIL,
-    zoneId: functions.config().cloudflare?.zone_id || process.env.CLOUDFLARE_ZONE_ID
+    apiKey: process.env.CLOUDFLARE_API_KEY,
+    email: process.env.CLOUDFLARE_EMAIL,
+    zoneId: process.env.CLOUDFLARE_ZONE_ID
   };
 }
 
@@ -15,7 +15,7 @@ async function getZoneId(domain) {
   const { apiKey, email } = getCloudflareConfig();
   
   if (!apiKey || !email) {
-    throw new Error('Cloudflare credentials not configured');
+    throw new Error('Cloudflare credentials not configured. Please set CLOUDFLARE_API_KEY and CLOUDFLARE_EMAIL in environment variables.');
   }
 
   try {
@@ -42,8 +42,11 @@ async function getZoneId(domain) {
 }
 
 async function getDNSRecords(domain) {
-  const apiKey = process.env.CLOUDFLARE_API_KEY;
-  const email = process.env.CLOUDFLARE_EMAIL;
+  const { apiKey, email } = getCloudflareConfig();
+  
+  if (!apiKey || !email) {
+    throw new Error('Cloudflare credentials not configured. Please set CLOUDFLARE_API_KEY and CLOUDFLARE_EMAIL in environment variables.');
+  }
   
   try {
     const zoneId = await getZoneId(domain);
@@ -67,8 +70,11 @@ async function getDNSRecords(domain) {
 }
 
 async function createDNSRecord(zoneId, record) {
-  const apiKey = process.env.CLOUDFLARE_API_KEY;
-  const email = process.env.CLOUDFLARE_EMAIL;
+  const { apiKey, email } = getCloudflareConfig();
+  
+  if (!apiKey || !email) {
+    throw new Error('Cloudflare credentials not configured');
+  }
 
   const response = await axios.post(
     `${CLOUDFLARE_API_URL}/zones/${zoneId}/dns_records`,
@@ -86,8 +92,11 @@ async function createDNSRecord(zoneId, record) {
 }
 
 async function updateDNSRecord(zoneId, recordId, record) {
-  const apiKey = process.env.CLOUDFLARE_API_KEY;
-  const email = process.env.CLOUDFLARE_EMAIL;
+  const { apiKey, email } = getCloudflareConfig();
+  
+  if (!apiKey || !email) {
+    throw new Error('Cloudflare credentials not configured');
+  }
 
   const response = await axios.put(
     `${CLOUDFLARE_API_URL}/zones/${zoneId}/dns_records/${recordId}`,
@@ -105,8 +114,11 @@ async function updateDNSRecord(zoneId, recordId, record) {
 }
 
 async function deleteDNSRecord(zoneId, recordId) {
-  const apiKey = process.env.CLOUDFLARE_API_KEY;
-  const email = process.env.CLOUDFLARE_EMAIL;
+  const { apiKey, email } = getCloudflareConfig();
+  
+  if (!apiKey || !email) {
+    throw new Error('Cloudflare credentials not configured');
+  }
 
   const response = await axios.delete(
     `${CLOUDFLARE_API_URL}/zones/${zoneId}/dns_records/${recordId}`,

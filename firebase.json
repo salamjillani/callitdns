@@ -3,6 +3,8 @@
     {
       "source": "server/functions",
       "codebase": "default",
+      "runtime": "nodejs20",
+      "region": "us-central1",
       "ignore": [
         "node_modules",
         ".git",

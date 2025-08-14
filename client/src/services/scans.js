@@ -1,64 +1,93 @@
-// client/src/services/scans.js
+// client/src/services/scans.js - Updated with better auth handling
 import { functions, auth } from '../firebase';
-import { httpsCallable } from 'firebase/functions';
+import { httpsCallable, connectFunctionsEmulator } from 'firebase/functions';
+
+// Ensure functions are connected to the right region
+// connectFunctionsEmulator(functions, "localhost", 5001); // Only for local development
 
 export const runHealthScan = async (domain) => {
+  console.log('=== SCAN REQUEST START ===');
+  
   // Check if user is authenticated
   const currentUser = auth.currentUser;
-  console.log('Current user for scan:', currentUser?.uid);
+  console.log('Current user for scan:', {
+    uid: currentUser?.uid,
+    email: currentUser?.email,
+    emailVerified: currentUser?.emailVerified
+  });
   
   if (!currentUser) {
     throw new Error('User not authenticated');
   }
 
   try {
+    // Force token refresh and wait longer for propagation
     console.log('Getting fresh token for scan...');
-    
-    // Force a token refresh with longer timeout
     const idToken = await currentUser.getIdToken(true);
-    console.log('Fresh token obtained for scan, length:', idToken?.length);
+    console.log('Fresh token obtained:', {
+      length: idToken?.length,
+      starts: idToken?.substring(0, 20) + '...'
+    });
     
-    // Wait longer to ensure Firebase Functions can process the token
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    // Validate token format
+    if (!idToken || idToken.length < 500) {
+      throw new Error('Invalid token received from Firebase Auth');
+    }
     
-    console.log('Calling runHealthScan function with domain:', domain);
+    // Wait longer for token propagation to Firebase Functions
+    console.log('Waiting for token propagation...');
+    await new Promise(resolve => setTimeout(resolve, 3000));
     
-    // Create the callable function
+    console.log('Creating callable function...');
     const scanFunction = httpsCallable(functions, 'runHealthScan');
     
-    // Call the function with proper error handling
+    console.log('Calling runHealthScan function with domain:', domain);
     const result = await scanFunction({ domain });
+    
     console.log('Scan function result:', result.data);
     return result.data;
     
   } catch (error) {
-    console.error('Scan function error:', error);
+    console.error('=== SCAN ERROR ===');
+    console.error('Error details:', {
+      code: error.code,
+      message: error.message,
+      details: error.details
+    });
     
-    // More specific error handling
+    // Handle specific authentication errors
     if (error.code === 'functions/unauthenticated' || 
         error.message?.includes('unauthenticated') ||
         error.message?.includes('Authentication required')) {
-      console.log('Auth error detected, attempting retry...');
+      
+      console.log('Auth error detected, trying complete sign-out/sign-in cycle...');
       
       try {
-        // Sign out and back in approach
-        console.log('Attempting complete re-authentication...');
-        
-        // Get a completely fresh token
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        const freshToken = await currentUser.getIdToken(true);
-        console.log('Retry token obtained, length:', freshToken?.length);
-        
-        // Wait even longer before retry
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        
-        const scanFunction = httpsCallable(functions, 'runHealthScan');
-        const retryResult = await scanFunction({ domain });
-        return retryResult.data;
+        // Complete sign-out and sign-in cycle
+        const user = auth.currentUser;
+        if (user) {
+          console.log('Attempting to refresh user session...');
+          await user.reload();
+          
+          // Force a complete token refresh
+          const newToken = await user.getIdToken(true);
+          console.log('New token obtained after reload:', {
+            length: newToken?.length,
+            different: newToken !== idToken
+          });
+          
+          // Wait even longer before retry
+          await new Promise(resolve => setTimeout(resolve, 5000));
+          
+          console.log('Retrying scan with refreshed auth...');
+          const scanFunction = httpsCallable(functions, 'runHealthScan');
+          const retryResult = await scanFunction({ domain });
+          return retryResult.data;
+        }
         
       } catch (retryError) {
         console.error('Retry failed:', retryError);
-        throw new Error('Authentication failed. Please sign out and sign in again to continue.');
+        throw new Error('Authentication failed. Please sign out completely and sign back in.');
       }
     }
     

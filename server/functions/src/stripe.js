@@ -1,5 +1,4 @@
 // server/functions/src/stripe.js
-const functions = require('firebase-functions');
 const admin = require('firebase-admin');
 
 // Initialize Stripe lazily to avoid initialization errors
@@ -7,11 +6,10 @@ let stripe;
 const getStripe = () => {
   if (!stripe) {
     const Stripe = require('stripe');
-    // Use Firebase Functions config in production, fallback to process.env for local development
-    const secretKey = functions.config().stripe?.secret_key || process.env.STRIPE_SECRET_KEY;
+    const secretKey = process.env.STRIPE_SECRET_KEY;
     
     if (!secretKey) {
-      throw new Error('Stripe secret key not configured. Please set stripe.secret_key in Firebase Functions config.');
+      throw new Error('Stripe secret key not configured. Please set STRIPE_SECRET_KEY in environment variables.');
     }
     
     stripe = Stripe(secretKey);
@@ -31,7 +29,7 @@ const PLANS = {
   },
   pro: {
     name: 'Pro',
-    priceId: functions.config().stripe?.pro_price_id || process.env.STRIPE_PRO_PRICE_ID || 'price_1RvOH2R1JkzRn27a7Ru5ZHv0',
+    priceId: process.env.STRIPE_PRO_PRICE_ID || 'price_1RvOH2R1JkzRn27a7Ru5ZHv0',
     price: 19,
     features: {
       domains: 10,
@@ -41,7 +39,7 @@ const PLANS = {
   },
   enterprise: {
     name: 'Enterprise',
-    priceId: functions.config().stripe?.enterprise_price_id || process.env.STRIPE_ENTERPRISE_PRICE_ID || 'price_1RvOKWR1JkzRn27aoCcblTD2',
+    priceId: process.env.STRIPE_ENTERPRISE_PRICE_ID || 'price_1RvOKWR1JkzRn27aoCcblTD2',
     price: 99,
     features: {
       domains: -1, // unlimited
@@ -109,13 +107,33 @@ async function createPortalSession(customerId, returnUrl) {
 async function getCustomerByUserId(userId) {
   const stripeInstance = getStripe();
   
-  // Search for customer with userId in metadata
-  // Note: This requires iterating through customers as Stripe doesn't support direct metadata search
+  // First check Firestore for stored customer ID
+  const userDoc = await admin.firestore().collection('users').doc(userId).get();
+  if (userDoc.exists && userDoc.data().stripeCustomerId) {
+    try {
+      const customer = await stripeInstance.customers.retrieve(userDoc.data().stripeCustomerId);
+      if (customer && !customer.deleted) {
+        return customer;
+      }
+    } catch (error) {
+      console.log('Stored customer ID invalid, searching by metadata...');
+    }
+  }
+  
+  // Fallback: Search for customer with userId in metadata
   const customers = await stripeInstance.customers.list({
     limit: 100
   });
   
   const customer = customers.data.find(c => c.metadata.userId === userId);
+  
+  // If found, update Firestore with the customer ID
+  if (customer) {
+    await admin.firestore().collection('users').doc(userId).set({
+      stripeCustomerId: customer.id
+    }, { merge: true });
+  }
+  
   return customer || null;
 }
 
