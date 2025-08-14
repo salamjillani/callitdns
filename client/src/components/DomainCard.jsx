@@ -63,13 +63,13 @@ export default function DomainCard({ domain, onDelete }) {
           )}
         </button>
         
-        <button
-          onClick={() => setShowDotty(!showDotty)}
-          className="flex items-center space-x-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-black font-semibold px-4 py-2 rounded-lg transition"
-        >
-          <Sparkles className="w-4 h-4" />
-          <span>Dotty AI</span>
-        </button>
+       <button
+  onClick={() => setShowDotty(!showDotty)}
+  className="flex items-center space-x-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 font-semibold px-4 py-2 rounded-lg transition"
+>
+  <Sparkles className="w-4 h-4 text-amber-400" />
+  <span className="text-amber-400 font-bold">Dotty AI</span>
+</button>
       </div>
 
       {showDotty && (
