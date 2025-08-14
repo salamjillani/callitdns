@@ -1,9 +1,6 @@
 // client/src/services/scans.js - Updated with better auth handling
 import { functions, auth } from '../firebase';
-import { httpsCallable, connectFunctionsEmulator } from 'firebase/functions';
-
-// Ensure functions are connected to the right region
-// connectFunctionsEmulator(functions, "localhost", 5001); // Only for local development
+import { httpsCallable} from 'firebase/functions';
 
 export const runHealthScan = async (domain) => {
   console.log('=== SCAN REQUEST START ===');
