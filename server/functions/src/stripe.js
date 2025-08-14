@@ -1,5 +1,23 @@
-const Stripe = require('stripe');
-const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
+// server/functions/src/stripe.js
+const functions = require('firebase-functions');
+const admin = require('firebase-admin');
+
+// Initialize Stripe lazily to avoid initialization errors
+let stripe;
+const getStripe = () => {
+  if (!stripe) {
+    const Stripe = require('stripe');
+    // Use Firebase Functions config in production, fallback to process.env for local development
+    const secretKey = functions.config().stripe?.secret_key || process.env.STRIPE_SECRET_KEY;
+    
+    if (!secretKey) {
+      throw new Error('Stripe secret key not configured. Please set stripe.secret_key in Firebase Functions config.');
+    }
+    
+    stripe = Stripe(secretKey);
+  }
+  return stripe;
+};
 
 const PLANS = {
   free: {
@@ -13,7 +31,7 @@ const PLANS = {
   },
   pro: {
     name: 'Pro',
-    priceId: process.env.STRIPE_PRO_PRICE_ID,
+    priceId: functions.config().stripe?.pro_price_id || process.env.STRIPE_PRO_PRICE_ID || 'price_1RvOH2R1JkzRn27a7Ru5ZHv0',
     price: 19,
     features: {
       domains: 10,
@@ -23,7 +41,7 @@ const PLANS = {
   },
   enterprise: {
     name: 'Enterprise',
-    priceId: process.env.STRIPE_ENTERPRISE_PRICE_ID,
+    priceId: functions.config().stripe?.enterprise_price_id || process.env.STRIPE_ENTERPRISE_PRICE_ID || 'price_1RvOKWR1JkzRn27aoCcblTD2',
     price: 99,
     features: {
       domains: -1, // unlimited
@@ -34,7 +52,8 @@ const PLANS = {
 };
 
 async function createCustomer(email, userId) {
-  const customer = await stripe.customers.create({
+  const stripeInstance = getStripe();
+  const customer = await stripeInstance.customers.create({
     email,
     metadata: {
       userId
@@ -45,6 +64,8 @@ async function createCustomer(email, userId) {
 }
 
 async function createCheckoutSession(userId, email, priceId, successUrl, cancelUrl) {
+  const stripeInstance = getStripe();
+  
   // Get or create customer
   let customer = await getCustomerByUserId(userId);
   
@@ -57,7 +78,7 @@ async function createCheckoutSession(userId, email, priceId, successUrl, cancelU
     }, { merge: true });
   }
   
-  const session = await stripe.checkout.sessions.create({
+  const session = await stripeInstance.checkout.sessions.create({
     customer: customer.id,
     payment_method_types: ['card'],
     line_items: [{
@@ -76,7 +97,8 @@ async function createCheckoutSession(userId, email, priceId, successUrl, cancelU
 }
 
 async function createPortalSession(customerId, returnUrl) {
-  const session = await stripe.billingPortal.sessions.create({
+  const stripeInstance = getStripe();
+  const session = await stripeInstance.billingPortal.sessions.create({
     customer: customerId,
     return_url: returnUrl
   });
@@ -85,16 +107,21 @@ async function createPortalSession(customerId, returnUrl) {
 }
 
 async function getCustomerByUserId(userId) {
-  const customers = await stripe.customers.list({
-    limit: 1,
-    query: `metadata['userId']:'${userId}'`
+  const stripeInstance = getStripe();
+  
+  // Search for customer with userId in metadata
+  // Note: This requires iterating through customers as Stripe doesn't support direct metadata search
+  const customers = await stripeInstance.customers.list({
+    limit: 100
   });
   
-  return customers.data[0] || null;
+  const customer = customers.data.find(c => c.metadata.userId === userId);
+  return customer || null;
 }
 
 async function getSubscription(customerId) {
-  const subscriptions = await stripe.subscriptions.list({
+  const stripeInstance = getStripe();
+  const subscriptions = await stripeInstance.subscriptions.list({
     customer: customerId,
     status: 'active',
     limit: 1
@@ -104,11 +131,17 @@ async function getSubscription(customerId) {
 }
 
 async function cancelSubscription(subscriptionId) {
-  const subscription = await stripe.subscriptions.update(subscriptionId, {
+  const stripeInstance = getStripe();
+  const subscription = await stripeInstance.subscriptions.update(subscriptionId, {
     cancel_at_period_end: true
   });
   
   return subscription;
+}
+
+// Export function to get Stripe instance for webhook handling
+function getStripeForWebhook() {
+  return getStripe();
 }
 
 module.exports = {
@@ -118,5 +151,6 @@ module.exports = {
   createPortalSession,
   getCustomerByUserId,
   getSubscription,
-  cancelSubscription
+  cancelSubscription,
+  getStripeForWebhook
 };

@@ -1,10 +1,22 @@
+const functions = require('firebase-functions');
 const axios = require('axios');
 
 const CLOUDFLARE_API_URL = 'https://api.cloudflare.com/client/v4';
 
+function getCloudflareConfig() {
+  return {
+    apiKey: functions.config().cloudflare?.api_key || process.env.CLOUDFLARE_API_KEY,
+    email: functions.config().cloudflare?.email || process.env.CLOUDFLARE_EMAIL,
+    zoneId: functions.config().cloudflare?.zone_id || process.env.CLOUDFLARE_ZONE_ID
+  };
+}
+
 async function getZoneId(domain) {
-  const apiKey = process.env.CLOUDFLARE_API_KEY;
-  const email = process.env.CLOUDFLARE_EMAIL;
+  const { apiKey, email } = getCloudflareConfig();
+  
+  if (!apiKey || !email) {
+    throw new Error('Cloudflare credentials not configured');
+  }
 
   try {
     const response = await axios.get(
