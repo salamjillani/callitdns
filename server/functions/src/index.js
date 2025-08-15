@@ -77,6 +77,16 @@ exports.runHealthScan = onCall({
   console.log('=== HEALTH SCAN START ===');
   console.log('Function triggered');
   console.log('Request data:', request.data);
+
+    console.log('Environment check:', {
+    hasCloudflareKey: !!process.env.CLOUDFLARE_API_KEY,
+    cloudflareKeyLength: process.env.CLOUDFLARE_API_KEY?.length || 0,
+    cloudflareKeyPreview: process.env.CLOUDFLARE_API_KEY ? 
+      `${process.env.CLOUDFLARE_API_KEY.substring(0, 5)}...${process.env.CLOUDFLARE_API_KEY.slice(-5)}` : 
+      'missing',
+    hasCloudflareEmail: !!process.env.CLOUDFLARE_EMAIL,
+    cloudflareEmail: process.env.CLOUDFLARE_EMAIL || 'not set'
+  });
   
   // Verify authentication
   let userId;

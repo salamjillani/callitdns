@@ -33,20 +33,12 @@ export default function Layout({ children }) {
         <nav className="container mx-auto px-6 py-4">
           <div className="flex justify-between items-center">
             {/* Logo */}
-            <Link to="/" className="flex items-center space-x-3 group">
-              <div className="relative">
-                <Globe className="w-8 h-8 text-amber-400 group-hover:rotate-12 transition-transform duration-300" />
-                <Sparkles className="w-4 h-4 text-orange-400 absolute -top-1 -right-1 animate-pulse" />
-              </div>
-              <span className="text-2xl font-bold tracking-tighter" style={{
-                background: 'linear-gradient(to right, #fbbf24, #ef4444)',
-                WebkitBackgroundClip: 'text',
-                backgroundClip: 'text',
-                color: 'transparent',
-                WebkitTextFillColor: 'transparent'
-              }}>
-                CallitDNS
-              </span>
+            <Link to="/" className="flex items-center h-16 overflow-hidden">
+              <img 
+                src="/logo.png" 
+                alt="CallitDNS" 
+                className="h-32 w-auto object-contain"
+              />
             </Link>
             
             {/* Navigation */}
