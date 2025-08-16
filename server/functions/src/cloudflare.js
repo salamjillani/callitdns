@@ -4,7 +4,6 @@ const axios = require('axios');
 const CLOUDFLARE_API_URL = 'https://api.cloudflare.com/client/v4';
 
 function getCloudflareConfig() {
-  // TEMPORARY HARDCODED FALLBACK - Remove after fixing
   const config = {
     apiKey: process.env.CLOUDFLARE_API_KEY || 'eca97f36f2d33f3225d70ba2de4ab6f20e50c',
     email: process.env.CLOUDFLARE_EMAIL || 'amanueldagnamyelew@gmail.com',
