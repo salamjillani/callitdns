@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { LogOut, Home, CreditCard, Shield, Sparkles, Globe } from 'lucide-react';
@@ -7,6 +7,11 @@ export default function Layout({ children }) {
   const { currentUser, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+
+  // This automatically scrolls to top whenever the route changes
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [location.pathname]);
 
   async function handleLogout() {
     try {
@@ -145,18 +150,63 @@ export default function Layout({ children }) {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-slate-800 mt-20 py-8 relative z-10">
-        <div className="container mx-auto px-4 sm:px-6">
-          <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
-            <div className="flex items-center space-x-2">
-              <Globe className="w-5 h-5 text-amber-400" />
-              <span className="text-slate-400 text-sm">
-                © 2025 CallitDNS.
-              </span>
-            </div>
-          </div>
-        </div>
-      </footer>
+   <footer className="border-t border-slate-800 mt-20 py-12 relative z-10 bg-slate-900/50 backdrop-blur-lg">
+  <div className="container mx-auto px-4 sm:px-6">
+    <div className="grid md:grid-cols-4 gap-8 mb-8">
+      <div>
+        <Link to="/" className="flex items-center space-x-2 mb-4">
+          <Globe className="w-6 h-6 text-amber-400" />
+          <span className="text-xl font-bold text-white">CallitDNS</span>
+        </Link>
+        <p className="text-slate-400 text-sm">
+          AI-powered DNS management for modern developers.
+        </p>
+      </div>
+      
+      <div>
+        <h5 className="font-semibold text-white mb-4">Product</h5>
+        <ul className="space-y-2 text-slate-400">
+          <li><Link to="/features" className="hover:text-amber-400">Features</Link></li>
+          <li><Link to="/pricing" className="hover:text-amber-400">Pricing</Link></li>
+        </ul>
+      </div>
+      
+      <div>
+        <h5 className="font-semibold text-white mb-4">Company</h5>
+        <ul className="space-y-2 text-slate-400">
+          <li><Link to="/blog" className="hover:text-amber-400">Blog</Link></li>
+          <li><Link to="/contact" className="hover:text-amber-400">Contact</Link></li>
+          <li><Link to="/contact?type=sales" className="hover:text-amber-400">Sales</Link></li>
+          <li><a href="mailto:hello@callitdns.com" className="hover:text-amber-400">Support</a></li>
+        </ul>
+      </div>
+      
+      <div>
+        <h5 className="font-semibold text-white mb-4">Legal</h5>
+        <ul className="space-y-2 text-slate-400">
+          <li><Link to="/privacy" className="hover:text-amber-400">Privacy Policy</Link></li>
+          <li><Link to="/terms" className="hover:text-amber-400">Terms of Service</Link></li>
+          <li><Link to="/cancellation" className="hover:text-amber-400">Cancellation Policy</Link></li>
+        </ul>
+      </div>
+    </div>
+    
+    <div className="border-t border-slate-800 pt-8 flex flex-col md:flex-row justify-between items-center">
+      <p className="text-slate-400 text-sm">
+        © 2025 CallitDNS, Inc. All rights reserved.
+      </p>
+      <div className="flex items-center space-x-4 mt-4 md:mt-0">
+        <a href="tel:703-831-7181" className="text-slate-400 hover:text-amber-400 text-sm">
+          703-831-7181
+        </a>
+        <span className="text-slate-600">•</span>
+        <a href="mailto:hello@callitdns.com" className="text-slate-400 hover:text-amber-400 text-sm">
+          hello@callitdns.com
+        </a>
+      </div>
+    </div>
+  </div>
+</footer>
     </div>
   );
 }

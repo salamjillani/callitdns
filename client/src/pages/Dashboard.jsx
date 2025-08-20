@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import Layout from '../components/Layout';
 import DomainCard from '../components/DomainCard';
 import SubscriptionManager from '../components/SubscriptionManager';
+import SupportModal from '../components/SupportModal';
 import { useAuth } from '../context/AuthContext';
 import { addDomain, getUserDomains, deleteDomain } from '../services/domains';
 import { getUserSubscription } from '../services/stripe';
-import { Plus, Globe, Loader } from 'lucide-react';
+import { Plus, Globe, Loader, Headphones, Users } from 'lucide-react';
 import AuthDebug from '../components/AuthDebug';
 
 export default function Dashboard() {
@@ -16,6 +18,7 @@ export default function Dashboard() {
   const [newDomain, setNewDomain] = useState('');
   const [error, setError] = useState('');
   const [subscription, setSubscription] = useState(null);
+  const [showSupportModal, setShowSupportModal] = useState(false);
 
   useEffect(() => {
     // Only load data after auth is fully checked and user exists
@@ -249,11 +252,31 @@ export default function Dashboard() {
           </div>
 
           <div className="lg:col-span-1">
+            <div className="bg-slate-900/50 backdrop-blur-lg border border-slate-800 rounded-xl p-6 mb-6">
+              <h3 className="text-lg font-semibold text-white mb-4">Quick Actions</h3>
+              <div className="space-y-3">
+                <button
+                  onClick={() => setShowSupportModal(true)}
+                  className="w-full flex items-center gap-3 bg-slate-800 hover:bg-slate-700 text-white px-4 py-3 rounded-lg transition"
+                >
+                  <Headphones className="w-5 h-5" />
+                  Get Support
+                </button>
+                <Link
+                  to="/contact?type=sales"
+                  className="w-full flex items-center gap-3 bg-slate-800 hover:bg-slate-700 text-white px-4 py-3 rounded-lg transition"
+                >
+                  <Users className="w-5 h-5" />
+                  Contact Sales
+                </Link>
+              </div>
+            </div>
             <SubscriptionManager />
           </div>
         </div>
       </div>
       <AuthDebug />
+      <SupportModal isOpen={showSupportModal} onClose={() => setShowSupportModal(false)} />
     </Layout>
   );
 }

@@ -3,6 +3,7 @@ const {onCall, onRequest, HttpsError} = require('firebase-functions/v2/https');
 const {setGlobalOptions} = require('firebase-functions/v2/options');
 const admin = require('firebase-admin');
 const cors = require('cors')({ origin: true });
+const { createSupportTicket, getUserTickets } = require('./support');
 
 // Set global options
 setGlobalOptions({
@@ -349,6 +350,41 @@ exports.getUserSubscription = onCall({
     return { plan: 'free', features: PLANS.free.features };
   }
 });
+
+exports.createSupportTicket = onCall({
+  timeoutSeconds: 60,
+  memory: '256MiB',
+  cors: true
+}, async (request) => {
+  try {
+    return await createSupportTicket(request);
+  } catch (error) {
+    console.error('Create support ticket error:', error);
+    throw new HttpsError(
+      'internal',
+      'Failed to create support ticket',
+      error.message
+    );
+  }
+});
+
+exports.getUserTickets = onCall({
+  timeoutSeconds: 60,
+  memory: '256MiB',
+  cors: true
+}, async (request) => {
+  try {
+    return await getUserTickets(request);
+  } catch (error) {
+    console.error('Get user tickets error:', error);
+    throw new HttpsError(
+      'internal',
+      'Failed to get tickets',
+      error.message
+    );
+  }
+});
+
 
 // Stripe Webhook (with CORS handling) - Added secrets parameter
 exports.stripeWebhook = onRequest({
