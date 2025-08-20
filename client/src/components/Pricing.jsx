@@ -31,7 +31,6 @@ const plans = [
       '50 Dotty commands per month',
       'Advanced DNS management',
       'Priority email support',
-      'API access',
       'Custom DNS templates'
     ],
     limitations: [
@@ -49,7 +48,6 @@ const plans = [
       'Unlimited Dotty commands',
       'Advanced DNS management',
       'Dedicated support',
-      'Full API access',
       'Custom DNS templates',
       'Team collaboration',
       'SLA guarantee',

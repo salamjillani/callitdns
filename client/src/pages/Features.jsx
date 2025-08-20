@@ -130,7 +130,7 @@ export default function Features() {
           </div>
         </section>
 
-        {/* Video Tutorials Section */}
+        {/* Video Tutorials Section
         <section id="video-tutorials" className="mb-20">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold text-white mb-4">How-To Videos</h2>
@@ -156,7 +156,7 @@ export default function Features() {
               </div>
             ))}
           </div>
-        </section>
+        </section> */}
 
         {/* How It Works */}
         <section id="how-it-works" className="mb-20">

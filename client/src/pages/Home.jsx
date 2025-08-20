@@ -417,23 +417,23 @@ export default function Home() {
 
         {/* How It Works Section with Video */}
         <section className="py-20 border-t border-slate-800 relative z-10">
-          <div className="text-center mb-16">
+          {/* <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-bold tracking-tighter text-white mb-4">
               See It In Action
             </h2>
             <p className="text-lg text-slate-300">
               Watch how easy DNS management can be with AI
             </p>
-          </div>
+          </div> */}
 
           <div className="max-w-4xl mx-auto">
-            <div className="bg-slate-900/50 backdrop-blur-lg border border-slate-800 rounded-xl p-2">
-              <div className="aspect-video bg-slate-800 rounded-lg flex items-center justify-center">
+            {/* <div className="bg-slate-900/50 backdrop-blur-lg border border-slate-800 rounded-xl p-2">
+              {/* <div className="aspect-video bg-slate-800 rounded-lg flex items-center justify-center">
                 <button className="bg-amber-500 hover:bg-amber-600 text-black rounded-full p-6 transition transform hover:scale-110">
                   <Play className="w-8 h-8" />
                 </button>
-              </div>
-            </div>
+              </div> */}
+            {/* </div> */} 
 
             <div className="grid md:grid-cols-3 gap-6 mt-12">
               <div className="text-center">
@@ -471,7 +471,7 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Developer Section */}
+        {/* Developer Section
         <section className="py-20 border-t border-slate-800 relative z-10">
           <div className="grid md:grid-cols-2 gap-16 items-center">
             <div>
@@ -518,7 +518,7 @@ export default function Home() {
               </pre>
             </div>
           </div>
-        </section>
+        </section> */}
 
         {/* Testimonials */}
         <section className="py-20 border-t border-slate-800 relative z-10">
