@@ -64,7 +64,7 @@ export default function Contact() {
           <div className="bg-slate-900/50 backdrop-blur-lg border border-slate-800 rounded-xl p-6 text-center">
             <MapPin className="w-6 h-6 text-amber-400 mx-auto mb-3" />
             <h3 className="text-lg font-semibold text-white mb-2">Office</h3>
-            <p className="text-slate-300">San Francisco, CA</p>
+            <p className="text-slate-300">Tysons, Virginia</p>
           </div>
         </div>
 
