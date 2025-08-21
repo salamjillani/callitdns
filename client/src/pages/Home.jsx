@@ -14,8 +14,10 @@ import {
 import * as THREE from "three";
 import { Link } from "react-router-dom";
 import Layout from "../components/Layout";
+import { useAuth } from "../context/AuthContext";
 
 export default function Home() {
+  const { currentUser } = useAuth();
   const canvasRef = useRef(null);
   const sectionCanvasRef = useRef(null);
   const [userPrompt, setUserPrompt] = useState("");
@@ -292,6 +294,18 @@ export default function Home() {
             prevents downtime, and writes its own records. Tell it your goal,
             and our AI, Dotty, does the rest.
           </p>
+
+          {/* Get Started Button - Only show if user is not logged in */}
+          {!currentUser && (
+            <div className="mb-12">
+              <Link
+                to="/login"
+                className="inline-block bg-amber-500 hover:bg-amber-600 text-black font-bold text-lg px-8 py-4 rounded-lg transition transform hover:scale-105"
+              >
+                Get Started For Free
+              </Link>
+            </div>
+          )}
 
           {/* Interactive Dotty Demo */}
           <div className="mt-16 max-w-2xl mx-auto p-6 rounded-xl bg-slate-900/50 backdrop-blur-lg border border-slate-800 text-left font-mono text-sm">
