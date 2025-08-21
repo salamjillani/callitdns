@@ -41,11 +41,17 @@ function App() {
 
           {/* Admin Routes - Using obscure paths for security */}
           <Route
-            path={import.meta.env.VITE_ADMIN_LOGIN_PATH}
+            path={
+              import.meta.env.VITE_ADMIN_LOGIN_PATH ||
+              "/callitdns-mgmt-portal-x9k2m"
+            }
             element={<AdminLogin />}
           />
           <Route
-            path={import.meta.env.VITE_ADMIN_CONSOLE_PATH}
+            path={
+              import.meta.env.VITE_ADMIN_CONSOLE_PATH ||
+              "/callitdns-mgmt-portal-x9k2m/console"
+            }
             element={
               <AdminRoute>
                 <AdminDashboard />
