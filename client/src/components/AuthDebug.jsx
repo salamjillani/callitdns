@@ -1,21 +1,21 @@
-import React, { useState } from 'react';
-import { useAuth } from '../context/AuthContext';
+import React, { useState } from "react";
+import { useAuth } from "../context/AuthContext";
 // import { auth } from '..services/firebase';
 
 export default function AuthDebug() {
   const { currentUser } = useAuth();
-  const [tokenInfo, setTokenInfo] = useState('');
+  const [tokenInfo, setTokenInfo] = useState("");
 
   const checkToken = async () => {
     if (!currentUser) {
-      setTokenInfo('No user logged in');
+      setTokenInfo("No user logged in");
       return;
     }
 
     try {
       const token = await currentUser.getIdToken(true);
       const tokenResult = await currentUser.getIdTokenResult(true);
-      
+
       setTokenInfo(`
 Token Length: ${token.length}
 Token Expires: ${new Date(tokenResult.expirationTime).toISOString()}
@@ -29,7 +29,7 @@ Claims: ${JSON.stringify(tokenResult.claims, null, 2)}
     }
   };
 
-  if (import.meta.env.NODE_ENV !== 'development') {
+  if (import.meta.env.NODE_ENV !== "development") {
     return null;
   }
 

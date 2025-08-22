@@ -439,7 +439,7 @@ export default function Home() {
                   <Play className="w-8 h-8" />
                 </button>
               </div> */}
-            {/* </div> */} 
+            {/* </div> */}
 
             <div className="grid md:grid-cols-3 gap-6 mt-12">
               <div className="text-center">

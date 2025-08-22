@@ -1,8 +1,8 @@
 // client/src/components/SubscriptionManager.jsx
-import React, { useState, useEffect } from 'react';
-import { CreditCard, Settings, AlertCircle } from 'lucide-react';
-import { getUserSubscription, createPortalSession } from '../services/stripe';
-import { useAuth } from '../context/AuthContext';
+import React, { useState, useEffect } from "react";
+import { CreditCard, Settings, AlertCircle } from "lucide-react";
+import { getUserSubscription, createPortalSession } from "../services/stripe";
+import { useAuth } from "../context/AuthContext";
 
 export default function SubscriptionManager() {
   const { currentUser } = useAuth();
@@ -18,7 +18,7 @@ export default function SubscriptionManager() {
       const sub = await getUserSubscription();
       setSubscription(sub);
     } catch (error) {
-      console.error('Error loading subscription:', error);
+      console.error("Error loading subscription:", error);
     } finally {
       setLoading(false);
     }
@@ -29,8 +29,8 @@ export default function SubscriptionManager() {
       const { url } = await createPortalSession(window.location.href);
       window.location.href = url;
     } catch (error) {
-      console.error('Error opening portal:', error);
-      alert('Failed to open billing portal. Please try again.');
+      console.error("Error opening portal:", error);
+      alert("Failed to open billing portal. Please try again.");
     }
   };
 
@@ -49,8 +49,8 @@ export default function SubscriptionManager() {
           <CreditCard className="w-6 h-6 text-amber-400" />
           <h3 className="text-xl font-semibold text-white">Subscription</h3>
         </div>
-        
-        {subscription?.plan !== 'free' && (
+
+        {subscription?.plan !== "free" && (
           <button
             onClick={handleManageSubscription}
             className="flex items-center space-x-2 text-slate-400 hover:text-white transition"
@@ -65,7 +65,7 @@ export default function SubscriptionManager() {
         <div className="flex justify-between items-center">
           <span className="text-slate-400">Current Plan</span>
           <span className="text-white font-semibold capitalize">
-            {subscription?.plan || 'Free'}
+            {subscription?.plan || "Free"}
           </span>
         </div>
 
@@ -74,26 +74,26 @@ export default function SubscriptionManager() {
             <div className="flex justify-between items-center">
               <span className="text-slate-400">Domains</span>
               <span className="text-white">
-                {subscription.features.domains === -1 
-                  ? 'Unlimited' 
+                {subscription.features.domains === -1
+                  ? "Unlimited"
                   : subscription.features.domains}
               </span>
             </div>
-            
+
             <div className="flex justify-between items-center">
               <span className="text-slate-400">Scans / Month</span>
               <span className="text-white">
-                {subscription.features.scansPerMonth === -1 
-                  ? 'Unlimited' 
+                {subscription.features.scansPerMonth === -1
+                  ? "Unlimited"
                   : subscription.features.scansPerMonth}
               </span>
             </div>
-            
+
             <div className="flex justify-between items-center">
               <span className="text-slate-400">Dotty Commands / Month</span>
               <span className="text-white">
-                {subscription.features.dottyCommands === -1 
-                  ? 'Unlimited' 
+                {subscription.features.dottyCommands === -1
+                  ? "Unlimited"
                   : subscription.features.dottyCommands}
               </span>
             </div>
@@ -106,15 +106,17 @@ export default function SubscriptionManager() {
               <AlertCircle className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
               <div>
                 <p className="text-amber-400 text-sm">
-                  Your subscription will end on{' '}
-                  {new Date(subscription.subscription.currentPeriodEnd * 1000).toLocaleDateString()}
+                  Your subscription will end on{" "}
+                  {new Date(
+                    subscription.subscription.currentPeriodEnd * 1000
+                  ).toLocaleDateString()}
                 </p>
               </div>
             </div>
           </div>
         )}
 
-        {subscription?.plan === 'free' && (
+        {subscription?.plan === "free" && (
           <div className="mt-4">
             <a
               href="/pricing"

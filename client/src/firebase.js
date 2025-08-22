@@ -1,8 +1,8 @@
 // client/src/firebase.js
-import { initializeApp } from 'firebase/app';
-import { getAuth, connectAuthEmulator } from 'firebase/auth';
-import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore';
-import { getFunctions, connectFunctionsEmulator } from 'firebase/functions';
+import { initializeApp } from "firebase/app";
+import { getAuth } from "firebase/auth";
+import { getFirestore } from "firebase/firestore";
+import { getFunctions } from "firebase/functions";
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -10,18 +10,18 @@ const firebaseConfig = {
   projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
   storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
   messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
 const app = initializeApp(firebaseConfig);
 
 export const auth = getAuth(app);
 export const db = getFirestore(app);
-export const functions = getFunctions(app, 'us-central1');
+export const functions = getFunctions(app, "us-central1");
 
 // Configure auth to force token refresh more frequently
 auth.settings = {
-  appVerificationDisabledForTesting: false
+  appVerificationDisabledForTesting: false,
 };
 
 // Set custom token refresh interval (5 minutes instead of default 1 hour)
@@ -32,16 +32,16 @@ auth.onAuthStateChanged((user) => {
       try {
         if (auth.currentUser) {
           await auth.currentUser.getIdToken(true);
-          console.log('Token refreshed automatically');
+          console.log("Token refreshed automatically");
         } else {
           clearInterval(refreshInterval);
         }
       } catch (error) {
-        console.error('Auto token refresh failed:', error);
+        console.error("Auto token refresh failed:", error);
         clearInterval(refreshInterval);
       }
     }, 5 * 60 * 1000); // 5 minutes
-    
+
     // Clear interval when user signs out
     const unsubscribe = auth.onAuthStateChanged((newUser) => {
       if (!newUser) {

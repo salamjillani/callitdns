@@ -1,16 +1,16 @@
 // client/src/components/SupportModal.jsx
-import React, { useState } from 'react';
-import { X, Send, Headphones } from 'lucide-react';
-import { createSupportTicket } from '../services/support';
-import { useAuth } from '../context/AuthContext';
+import React, { useState } from "react";
+import { X, Send, Headphones } from "lucide-react";
+import { createSupportTicket } from "../services/support";
+import { useAuth } from "../context/AuthContext";
 
 export default function SupportModal({ isOpen, onClose }) {
   const { currentUser } = useAuth();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
-    subject: '',
-    message: '',
-    priority: 'normal'
+    subject: "",
+    message: "",
+    priority: "normal",
   });
 
   if (!isOpen) return null;
@@ -18,20 +18,20 @@ export default function SupportModal({ isOpen, onClose }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    
+
     try {
       await createSupportTicket({
         ...formData,
         userId: currentUser.uid,
         email: currentUser.email,
-        type: 'support'
+        type: "support",
       });
-      
-      alert('Support ticket created successfully!');
+
+      alert("Support ticket created successfully!");
       onClose();
     } catch (error) {
-      console.error('Error creating ticket:', error);
-      alert('Failed to create ticket. Please try again.');
+      console.error("Error creating ticket:", error);
+      alert("Failed to create ticket. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -59,7 +59,9 @@ export default function SupportModal({ isOpen, onClose }) {
               type="text"
               required
               value={formData.subject}
-              onChange={(e) => setFormData({...formData, subject: e.target.value})}
+              onChange={(e) =>
+                setFormData({ ...formData, subject: e.target.value })
+              }
               className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white"
               placeholder="Brief description of your issue"
             />
@@ -71,7 +73,9 @@ export default function SupportModal({ isOpen, onClose }) {
             </label>
             <select
               value={formData.priority}
-              onChange={(e) => setFormData({...formData, priority: e.target.value})}
+              onChange={(e) =>
+                setFormData({ ...formData, priority: e.target.value })
+              }
               className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white"
             >
               <option value="low">Low</option>
@@ -89,7 +93,9 @@ export default function SupportModal({ isOpen, onClose }) {
               required
               rows={4}
               value={formData.message}
-              onChange={(e) => setFormData({...formData, message: e.target.value})}
+              onChange={(e) =>
+                setFormData({ ...formData, message: e.target.value })
+              }
               className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg text-white"
               placeholder="Describe your issue in detail"
             />
@@ -100,7 +106,9 @@ export default function SupportModal({ isOpen, onClose }) {
             disabled={loading}
             className="w-full flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-600 disabled:bg-amber-700 text-black font-bold py-3 rounded-lg transition"
           >
-            {loading ? 'Sending...' : (
+            {loading ? (
+              "Sending..."
+            ) : (
               <>
                 <Send className="w-4 h-4" />
                 Send Ticket

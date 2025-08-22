@@ -1,16 +1,23 @@
 // server/functions/src/dotty.js
-const { GoogleGenerativeAI } = require('@google/generative-ai');
-const { createDNSRecord, updateDNSRecord, deleteDNSRecord, getZoneId } = require('./cloudflare');
+const { GoogleGenerativeAI } = require("@google/generative-ai");
+const {
+  createDNSRecord,
+  updateDNSRecord,
+  deleteDNSRecord,
+  getZoneId,
+} = require("./cloudflare");
 
 async function processDottyCommand(command, domain, existingRecords) {
   const apiKey = process.env.GEMINI_API_KEY;
-  
+
   if (!apiKey) {
-    throw new Error('Gemini API key not configured. Please set GEMINI_API_KEY in environment variables.');
+    throw new Error(
+      "Gemini API key not configured. Please set GEMINI_API_KEY in environment variables."
+    );
   }
-  
+
   const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
   const prompt = `
     You are Dotty, an AI DNS assistant. Convert the following natural language command into DNS record operations.
@@ -66,88 +73,91 @@ async function processDottyCommand(command, domain, existingRecords) {
     const result = await model.generateContent(prompt);
     const response = await result.response;
     const text = response.text();
-    
+
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (jsonMatch) {
       return JSON.parse(jsonMatch[0]);
     }
-    
-    throw new Error('Invalid response format from AI');
+
+    throw new Error("Invalid response format from AI");
   } catch (error) {
-    console.error('Dotty AI error:', error);
+    console.error("Dotty AI error:", error);
     throw error;
   }
 }
 
 async function executeDottyActions(actions, domain, zoneId) {
   const results = [];
-  
+
   console.log(`Executing ${actions.length} actions for domain ${domain}`);
-  
+
   for (const action of actions) {
     try {
       let result;
-      
+
       console.log(`Executing action: ${action.type}`, action.record);
-      
+
       switch (action.type) {
-        case 'create':
+        case "create":
           // Ensure record has correct structure for creation
           const createRecord = {
             type: action.record.type,
-            name: action.record.name === '@' ? domain : action.record.name,
+            name: action.record.name === "@" ? domain : action.record.name,
             content: action.record.content,
             ttl: action.record.ttl || 3600,
-            proxied: action.record.proxied || false
+            proxied: action.record.proxied || false,
           };
-          
+
           // Add priority for MX records
-          if (action.record.type === 'MX') {
+          if (action.record.type === "MX") {
             createRecord.priority = action.record.priority;
           }
-          
-          console.log('Creating record:', createRecord);
+
+          console.log("Creating record:", createRecord);
           result = await createDNSRecord(zoneId, createRecord);
           break;
-          
-        case 'update':
+
+        case "update":
           // This should rarely be used - prefer delete + create
           if (!action.record.id) {
-            throw new Error('Record ID required for update action');
+            throw new Error("Record ID required for update action");
           }
-          result = await updateDNSRecord(zoneId, action.record.id, action.record);
+          result = await updateDNSRecord(
+            zoneId,
+            action.record.id,
+            action.record
+          );
           break;
-          
-        case 'delete':
+
+        case "delete":
           if (!action.record.id) {
-            throw new Error('Record ID required for delete action');
+            throw new Error("Record ID required for delete action");
           }
           console.log(`Deleting record with ID: ${action.record.id}`);
           result = await deleteDNSRecord(zoneId, action.record.id);
           break;
-          
+
         default:
           throw new Error(`Unknown action type: ${action.type}`);
       }
-      
+
       results.push({
         success: true,
         action: action.type,
         record: action.record,
-        result
+        result,
       });
-      
     } catch (error) {
       console.error(`Error executing ${action.type} action:`, error.message);
       results.push({
         success: false,
         action: action.type,
         record: action.record,
-        error: error.message
+        error: error.message,
       });
     }
   }
-  
+
   console.log(`Completed ${results.length} actions`);
   return results;
 }

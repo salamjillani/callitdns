@@ -1,4 +1,4 @@
-import { db } from '../firebase';
+import { db } from "../firebase";
 import {
   collection,
   addDoc,
@@ -8,8 +8,8 @@ import {
   getDocs,
   doc,
   deleteDoc,
-  serverTimestamp
-} from 'firebase/firestore';
+  serverTimestamp,
+} from "firebase/firestore";
 
 export const addDomain = async (userId, domainName) => {
   const domainData = {
@@ -17,34 +17,36 @@ export const addDomain = async (userId, domainName) => {
     userId,
     createdAt: serverTimestamp(),
     lastScanned: null,
-    status: 'active'
+    status: "active",
   };
 
-  const docRef = await addDoc(collection(db, 'domains'), domainData);
-  
+  const docRef = await addDoc(collection(db, "domains"), domainData);
+
   return {
     id: docRef.id,
     ...domainData,
-    createdAt: new Date().toISOString()
+    createdAt: new Date().toISOString(),
   };
 };
 
 export const getUserDomains = async (userId) => {
   const q = query(
-    collection(db, 'domains'),
-    where('userId', '==', userId),
-    orderBy('createdAt', 'desc')
+    collection(db, "domains"),
+    where("userId", "==", userId),
+    orderBy("createdAt", "desc")
   );
 
   const snapshot = await getDocs(q);
-  
-  return snapshot.docs.map(doc => ({
+
+  return snapshot.docs.map((doc) => ({
     id: doc.id,
     ...doc.data(),
-    createdAt: doc.data().createdAt?.toDate?.()?.toISOString() || new Date().toISOString()
+    createdAt:
+      doc.data().createdAt?.toDate?.()?.toISOString() ||
+      new Date().toISOString(),
   }));
 };
 
 export const deleteDomain = async (domainId) => {
-  await deleteDoc(doc(db, 'domains', domainId));
+  await deleteDoc(doc(db, "domains", domainId));
 };

@@ -1,12 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import Layout from '../components/Layout';
+import React, { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import Layout from "../components/Layout";
 
 export default function Login() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const { login, currentUser } = useAuth();
   const navigate = useNavigate();
@@ -14,7 +14,7 @@ export default function Login() {
   // Redirect if user is already logged in
   useEffect(() => {
     if (currentUser) {
-      navigate('/dashboard');
+      navigate("/dashboard");
     }
   }, [currentUser, navigate]);
 
@@ -22,12 +22,12 @@ export default function Login() {
     e.preventDefault();
 
     try {
-      setError('');
+      setError("");
       setLoading(true);
       await login(email, password);
       // Navigation will be handled by useEffect when currentUser changes
     } catch (error) {
-      setError('Failed to log in. Please check your credentials.');
+      setError("Failed to log in. Please check your credentials.");
       setLoading(false);
     }
   }
@@ -41,8 +41,10 @@ export default function Login() {
     <Layout>
       <div className="max-w-md mx-auto mt-8 sm:mt-16 px-4">
         <div className="bg-slate-900/50 backdrop-blur-lg border border-slate-800 rounded-xl p-6 sm:p-8">
-          <h2 className="text-2xl sm:text-3xl font-bold text-white mb-6">Log In</h2>
-          
+          <h2 className="text-2xl sm:text-3xl font-bold text-white mb-6">
+            Log In
+          </h2>
+
           {error && (
             <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
               <p className="text-red-400 text-sm">{error}</p>
@@ -51,7 +53,9 @@ export default function Login() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-slate-300 mb-2 text-sm sm:text-base">Email</label>
+              <label className="block text-slate-300 mb-2 text-sm sm:text-base">
+                Email
+              </label>
               <input
                 type="email"
                 value={email}
@@ -63,7 +67,9 @@ export default function Login() {
             </div>
 
             <div>
-              <label className="block text-slate-300 mb-2 text-sm sm:text-base">Password</label>
+              <label className="block text-slate-300 mb-2 text-sm sm:text-base">
+                Password
+              </label>
               <input
                 type="password"
                 value={password}
@@ -79,19 +85,25 @@ export default function Login() {
               type="submit"
               className="w-full bg-amber-500 hover:bg-amber-600 disabled:bg-amber-700 text-black font-bold py-2 sm:py-3 rounded-lg transition text-sm sm:text-base"
             >
-              {loading ? 'Logging in...' : 'Log In'}
+              {loading ? "Logging in..." : "Log In"}
             </button>
           </form>
 
           <div className="mt-6 text-center text-slate-400 text-sm sm:text-base">
             <p>
-              Don't have an account?{' '}
-              <Link to="/signup" className="text-amber-400 hover:text-amber-300">
+              Don't have an account?{" "}
+              <Link
+                to="/signup"
+                className="text-amber-400 hover:text-amber-300"
+              >
                 Sign up
               </Link>
             </p>
             <p className="mt-2">
-              <Link to="/reset-password" className="text-amber-400 hover:text-amber-300">
+              <Link
+                to="/reset-password"
+                className="text-amber-400 hover:text-amber-300"
+              >
                 Forgot password?
               </Link>
             </p>

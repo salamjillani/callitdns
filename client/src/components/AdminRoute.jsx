@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from 'react';
-import { Navigate } from 'react-router-dom';
-import { auth, db } from '../firebase';
-import { doc, getDoc } from 'firebase/firestore';
-import { onAuthStateChanged } from 'firebase/auth';
+import React, { useEffect, useState } from "react";
+import { Navigate } from "react-router-dom";
+import { auth, db } from "../firebase";
+import { doc, getDoc } from "firebase/firestore";
+import { onAuthStateChanged } from "firebase/auth";
 
 export default function AdminRoute({ children }) {
   const [isAdmin, setIsAdmin] = useState(null);
@@ -23,28 +23,35 @@ export default function AdminRoute({ children }) {
 
   const checkAdminStatus = async (user) => {
     try {
-      const adminDoc = await getDoc(doc(db, 'admins', user.uid));
-      
-      if (adminDoc.exists() && adminDoc.data().isAdmin && adminDoc.data().status === 'active') {
+      const adminDoc = await getDoc(doc(db, "admins", user.uid));
+
+      if (
+        adminDoc.exists() &&
+        adminDoc.data().isAdmin &&
+        adminDoc.data().status === "active"
+      ) {
         setIsAdmin(true);
         // Update localStorage with admin status
-        localStorage.setItem('isAdmin', 'true');
-        localStorage.setItem('adminData', JSON.stringify({
-          uid: user.uid,
-          email: user.email,
-          name: adminDoc.data().name
-        }));
+        localStorage.setItem("isAdmin", "true");
+        localStorage.setItem(
+          "adminData",
+          JSON.stringify({
+            uid: user.uid,
+            email: user.email,
+            name: adminDoc.data().name,
+          })
+        );
       } else {
         setIsAdmin(false);
         // Clear localStorage if not admin
-        localStorage.removeItem('isAdmin');
-        localStorage.removeItem('adminData');
+        localStorage.removeItem("isAdmin");
+        localStorage.removeItem("adminData");
       }
     } catch (error) {
-      console.error('Error checking admin status:', error);
+      console.error("Error checking admin status:", error);
       setIsAdmin(false);
-      localStorage.removeItem('isAdmin');
-      localStorage.removeItem('adminData');
+      localStorage.removeItem("isAdmin");
+      localStorage.removeItem("adminData");
     } finally {
       setLoading(false);
     }
